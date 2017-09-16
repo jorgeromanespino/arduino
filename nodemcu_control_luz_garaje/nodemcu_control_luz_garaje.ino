@@ -1,9 +1,9 @@
 // 
 const int SENSOR_LUZ_PIN = A0;
-const int SENSOR_CORRIENTE_PIN = D1;
+const int SENSOR_CORRIENTE_PIN = D0;
 const int SENSOR_PRESENCIA_PIN = D2;
 const int ACTUADOR_RELE_LUZ_PIN = D3;
-const int SENSOR_INTERRUPTOR_PIN = D0;
+const int SENSOR_INTERRUPTOR_PIN = D1;
 
 //
 void setup() {
@@ -14,7 +14,9 @@ void setup() {
   pinMode(SENSOR_CORRIENTE_PIN, INPUT);
   pinMode(SENSOR_PRESENCIA_PIN, INPUT);
   pinMode(ACTUADOR_RELE_LUZ_PIN, OUTPUT);
-  pinMode(SENSOR_INTERRUPTOR_PIN, INPUT);
+  pinMode(SENSOR_INTERRUPTOR_PIN, INPUT_PULLUP);
+  //
+  attachInterrupt(digitalPinToInterrupt(SENSOR_INTERRUPTOR_PIN), handle_interrupt_pressed_interruptor, CHANGE);
 }
 
 //
@@ -34,15 +36,20 @@ void loop() {
 }
 
 //
-int interruptor_conmutado_valor = 0;
+//int interruptor_conmutado_contador_pulsaciones = 0;
 int interruptor_conmutado_estado = 0;
-int interruptor_conmutado_pulsado = 0;
+int interruptor_conmutado_conmutado = 0;
 void tratar_interruptor_luz() {  
-  interruptor_conmutado_valor = digitalRead(SENSOR_INTERRUPTOR_PIN);
-  interruptor_conmutado_pulsado = (interruptor_conmutado_valor != interruptor_conmutado_estado) ? 1 : 0;    
-  interruptor_conmutado_estado = interruptor_conmutado_valor;
-  //Serial.print("interruptor_conmutado_pulsado: ");
-  //Serial.println(interruptor_conmutado_pulsado);
+  //interruptor_conmutado_contador_pulsaciones = 0;
+  interruptor_conmutado_estado = interruptor_conmutado_conmutado ? 1 - interruptor_conmutado_estado : interruptor_conmutado_estado;
+  Serial.print("interruptor_conmutado_estado: ");
+  Serial.println(interruptor_conmutado_estado);
+}
+//
+void handle_interrupt_pressed_interruptor() {
+  //interruptor_conmutado_contador_pulsaciones++;  
+  interruptor_conmutado_conmutado = 1;
+  Serial.println(interruptor_conmutado_conmutado);
 }
 
 //
@@ -78,10 +85,11 @@ void tratar_iluminacion_garaje() {
     // Se enciende la luz
     digitalWrite(ACTUADOR_RELE_LUZ_PIN, HIGH);
     Serial.println("arranque_motor_detectado");
-  } else if (interruptor_conmutado_pulsado) {
+  } else if (interruptor_conmutado_conmutado) {
     // Se conmuta la luz
     digitalWrite(ACTUADOR_RELE_LUZ_PIN, interruptor_conmutado_estado);
-    Serial.println("interruptor_pulsado");
+    interruptor_conmutado_conmutado = 0;
+    Serial.println("interruptor_conmutado_conmutado");
   } else if (presencia_detectada) {
     Serial.println("presencia_detectada");
     if (!luz_detectada) {
