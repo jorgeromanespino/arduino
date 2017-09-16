@@ -1,6 +1,6 @@
 // 
 const int SENSOR_LUZ_PIN = A0;
-const int SENSOR_CORRIENTE_PIN = D0;
+const int SENSOR_CORRIENTE_PIN = D5;
 const int SENSOR_PRESENCIA_PIN = D2;
 const int ACTUADOR_RELE_LUZ_PIN = D3;
 const int SENSOR_INTERRUPTOR_PIN = D1;
@@ -17,6 +17,7 @@ void setup() {
   pinMode(SENSOR_INTERRUPTOR_PIN, INPUT_PULLUP);
   //
   attachInterrupt(digitalPinToInterrupt(SENSOR_INTERRUPTOR_PIN), handle_interrupt_pressed_interruptor, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(SENSOR_CORRIENTE_PIN), handle_interrupt_corriente_motor, RISING);
 }
 
 //
@@ -47,9 +48,10 @@ void tratar_interruptor_luz() {
 }
 //
 void handle_interrupt_pressed_interruptor() {
+  // TODO Temporizar un tiempo, desde la última lectura, para evitar sobredeteccion
   //interruptor_conmutado_contador_pulsaciones++;  
   interruptor_conmutado_conmutado = 1;
-  Serial.println(interruptor_conmutado_conmutado);
+  //Serial.println(interruptor_conmutado_conmutado);
 }
 
 //
@@ -74,16 +76,23 @@ void tratar_deteccion_presencia() {
 //
 int arranque_motor_detectado = 0;
 void tratar_estado_motor_puerta() {
-  arranque_motor_detectado = 1 - digitalRead(SENSOR_CORRIENTE_PIN);  
+  //arranque_motor_detectado = 1 - digitalRead(SENSOR_CORRIENTE_PIN);  
   //Serial.print("arranque_motor_detectado: ");
   //Serial.println(arranque_motor_detectado);
 }
-
+//
+void handle_interrupt_corriente_motor() {
+  // TODO Temporizar un tiempo, desde la última lectura, para evitar sobredeteccion
+  arranque_motor_detectado = 1; 
+  Serial.print("arranque_motor_detectado: ");
+  Serial.println(arranque_motor_detectado);
+}
 //
 void tratar_iluminacion_garaje() {
   if (arranque_motor_detectado) {
     // Se enciende la luz
     digitalWrite(ACTUADOR_RELE_LUZ_PIN, HIGH);
+    arranque_motor_detectado = 0; 
     Serial.println("arranque_motor_detectado");
   } else if (interruptor_conmutado_conmutado) {
     // Se conmuta la luz
